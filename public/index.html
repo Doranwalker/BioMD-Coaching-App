@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10293b">
+  <meta name="description" content="Practise difficult healthcare leadership conversations in a safe, realistic environment. Free interactive coaching from BioMD Consulting.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Leadership Conversation Coach — BioMD">
+  <meta property="og:description" content="A better conversation starts with practice. Try a free, interactive leadership scenario and receive specific coaching feedback.">
+  <meta property="og:image" content="/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Leadership Conversation Coach | BioMD</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="BioMD Leadership Coach home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span class="brand-word">Bio<span>MD</span><small>CONSULTING</small></span>
+      </a>
+      <div class="header-right"><span class="eyebrow-label">A FREE LEADERSHIP RESOURCE</span><a class="website-link" href="https://www.biomdconsulting.com" target="_blank" rel="noopener noreferrer">About BioMD <span aria-hidden="true">↗</span></a></div>
+    </header>
+
+    <main>
+      <section class="intro" id="intro">
+        <div class="intro-copy">
+          <div class="mini-label"><span class="mini-dot"></span> THE BIO<span class="brand-inline">MD</span> PRACTICE LAB <span class="line"></span> 01</div>
+          <h1>The conversations that matter deserve <em>practice.</em></h1>
+          <p>Rehearse a difficult workplace conversation with a realistic, AI-powered colleague. Find the words, test your approach, and leave with specific feedback you can use.</p>
+          <div class="intro-checks"><span><i aria-hidden="true">✓</i> About 3 minutes</span><span><i aria-hidden="true">✓</i> No sign-up</span><span><i aria-hidden="true">✓</i> Built for healthcare leaders</span></div>
+          <a href="#choose" class="primary-button hero-cta">Start a practice conversation <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="intro-art" aria-hidden="true">
+          <div class="float-tag tag-one">LISTEN FIRST <span>↗</span></div>
+          <div class="bubble bubble-a"><span class="bubble-avatar avatar-coral">E</span><div><span class="bubble-by">YOUR COLLEAGUE</span><p>We're being asked to do more with less. I don't think anyone is listening.</p></div></div>
+          <div class="bubble bubble-b"><span class="bubble-avatar avatar-blue">YOU</span><div><span class="bubble-by">YOUR RESPONSE</span><p>I want to understand which parts of the workload are causing the most difficulty.</p></div></div>
+          <div class="float-tag tag-two"><span class="star">✦</span> PRACTICE. REFLECT. IMPROVE.</div>
+          <div class="art-corner">01 — ROLE-PLAY</div>
+        </div>
+      </section>
+
+      <section class="practice-section" id="choose">
+        <div class="section-head"><span class="section-index">01 / THE SCENARIO</span><h2>Choose your conversation.</h2><p>Start with a common leadership challenge. Every scenario uses fictional people and situations.</p></div>
+        <div class="scenario-grid" id="scenarioGrid" role="group" aria-label="Choose a conversation scenario">
+          <button class="scenario-card selected" type="button" data-scenario="workload" aria-pressed="true"><span class="scenario-count">01</span><span class="scenario-glyph" aria-hidden="true">◷</span><strong>Workload concerns</strong><span>An employee feels overwhelmed and unheard.</span><span class="card-bottom">PRACTISE THIS <b>↗</b></span></button>
+          <button class="scenario-card" type="button" data-scenario="change" aria-pressed="false"><span class="scenario-count">02</span><span class="scenario-glyph" aria-hidden="true">⌁</span><strong>Resistance to change</strong><span>A respected team member questions a new process.</span><span class="card-bottom">PRACTISE THIS <b>↗</b></span></button>
+          <button class="scenario-card" type="button" data-scenario="accountability" aria-pressed="false"><span class="scenario-count">03</span><span class="scenario-glyph" aria-hidden="true">◎</span><strong>Accountability</strong><span>A colleague has repeatedly missed agreed deadlines.</span><span class="card-bottom">PRACTISE THIS <b>↗</b></span></button>
+          <button class="scenario-card" type="button" data-scenario="conflict" aria-pressed="false"><span class="scenario-count">04</span><span class="scenario-glyph" aria-hidden="true">⇄</span><strong>Team conflict</strong><span>Two colleagues disagree about roles and responsibilities.</span><span class="card-bottom">PRACTISE THIS <b>↗</b></span></button>
+        </div>
+        <div class="setup-bar"><div class="setup-left"><strong>How challenging should it be?</strong><span>Choose the response style you'd like to practise.</span></div><div class="difficulty-options" id="difficultyOptions" role="group" aria-label="Choose conversation difficulty"><button type="button" data-difficulty="supportive" aria-pressed="false">Supportive</button><button type="button" data-difficulty="realistic" aria-pressed="true" class="active">Realistic</button><button type="button" data-difficulty="challenging" aria-pressed="false">Challenging</button></div><button type="button" class="primary-button setup-button" id="beginButton">Begin practice <span aria-hidden="true">→</span></button></div>
+      </section>
+
+      <section class="session-section hidden" id="session" aria-label="Conversation practice" tabindex="-1">
+        <div class="session-top"><div><span class="section-index">02 / THE CONVERSATION</span><h2>Take your turn.</h2><p id="sessionSubtitle">Use your own words. The colleague will respond to what you say.</p></div><button type="button" id="changeScenarioButton" class="text-link">← Change scenario</button></div>
+        <div class="session-layout">
+          <div class="chat-panel">
+            <div class="chat-topline"><div class="live-indicator"><span></span><span id="modeLabel">Guided demonstration</span></div><div id="turnCounter">0 of 4 responses</div></div>
+            <div class="chat-context"><span id="scenarioLabel">Workload concerns</span><span class="sep-dot">·</span><span id="difficultyLabel">Realistic</span></div>
+            <div class="chat-messages" id="chatMessages" aria-live="polite" aria-relevant="additions text"></div>
+            <form id="messageForm" class="message-form"><label for="userMessage" class="sr-only">Your response to the colleague</label><textarea id="userMessage" rows="2" maxlength="1100" placeholder="How would you respond?" autocomplete="off" required></textarea><button id="sendButton" type="submit" class="send-button" aria-label="Send response">➤</button></form>
+            <div class="composer-foot"><span id="privacyReminder">Keep details fictional. Do not enter personal or patient information.</span><button type="button" id="finishEarlyButton" class="finish-button" disabled>Finish &amp; reflect →</button></div>
+          </div>
+          <aside class="session-aside"><div class="aside-label">YOUR PRACTICE GUIDE</div><h3>Stay curious before you solve.</h3><p>This is a space to experiment. Try asking a question, acknowledging a concern, or clarifying an expectation.</p><div class="aside-rule"></div><div class="aside-feature"><span>01</span> Listen for the real concern</div><div class="aside-feature"><span>02</span> Be clear and respectful</div><div class="aside-feature"><span>03</span> Agree on a next step</div><div class="aside-footer"><span id="privacyStatus">Fictional scenarios only</span><span id="modelStatus">Guided demo</span></div></aside>
+        </div>
+      </section>
+
+      <section class="feedback-section hidden" id="feedback" aria-label="Your conversation debrief" tabindex="-1"><div class="feedback-top"><div><span class="section-index">03 / THE REFLECTION</span><h2>Your practice debrief.</h2><p>Use this as a learning aid, not a formal assessment of your leadership capability.</p></div><span class="complete-tag">PRACTICE COMPLETE <span>✦</span></span></div><div id="feedbackContent" class="feedback-content"></div><div class="feedback-actions"><button type="button" class="primary-button" id="retryButton">Try the conversation again <span aria-hidden="true">→</span></button><button type="button" class="outline-button" id="downloadButton">Download JPG dashboard ↓</button><button type="button" class="outline-button" id="anotherButton">Choose another scenario</button></div></section>
+
+      <section class="value-section"><div class="value-heading"><span class="section-index">BUILT WITH PURPOSE</span><h2>Better preparation.<br><em>Better conversations.</em></h2></div><div class="value-copy"><p>Leadership conversations influence trust, accountability, and team culture. This free practice lab offers a low-pressure opportunity to rehearse your approach before talking with a real person.</p><p>Created by <a href="https://www.biomdconsulting.com" target="_blank" rel="noopener noreferrer">BioMD Consulting ↗</a>, drawing on experience in healthcare leadership, workforce engagement, and organizational change.</p><small>Developmental practice only. Not clinical, legal, HR, or mental-health advice. Follow your organization’s policies and seek appropriate professional support for formal employment or safety matters.</small></div></section>
+    </main>
+    <footer><div class="footer-brand">Bio<span>MD</span><small>CONSULTING</small></div><div>© <span id="year">2026</span> BioMD Consulting. For practice and learning.</div><a href="https://www.biomdconsulting.com" target="_blank" rel="noopener noreferrer">biomdconsulting.com ↗</a></footer>
+  </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>

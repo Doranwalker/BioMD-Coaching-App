@@ -1,0 +1,12 @@
+{
+  "name": "biomd-leadership-conversation-coach-netlify",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "description": "Standalone BioMD Leadership Conversation Coach, adapted for Netlify Functions.",
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod",
+    "test": "node --test tests/*.test.js"
+  }
+}
