@@ -118,6 +118,65 @@ function wrapText(ctx,text,maxWidth){const words=String(text||'').split(/\n+/).f
 function wrapTextEllipsis(ctx,text,maxWidth,maxLines){const lines=wrapText(ctx,text,maxWidth);if(lines.length<=maxLines)return lines;const cut=lines.slice(0,maxLines);let last=cut[maxLines-1];while(last.length&&ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1).trim();cut[maxLines-1]=(last||cut[maxLines-1])+'…';return cut;}
 function drawWrappedText(ctx,text,x,y,maxWidth,lineHeight,maxLines,color=BRAND.text,font){if(font)ctx.font=font;ctx.fillStyle=color;const lines=wrapTextEllipsis(ctx,text,maxWidth,maxLines);lines.forEach((line,i)=>ctx.fillText(line,x,y+i*lineHeight));return y+lines.length*lineHeight;}
 function drawBulletList(ctx,items,x,y,maxWidth,lineHeight,maxItems,bulletColor,textColor,font,maxLinesPerItem=3){if(font)ctx.font=font;let cursor=y;(items||[]).slice(0,maxItems).forEach(item=>{ctx.fillStyle=bulletColor;ctx.beginPath();ctx.arc(x,cursor-7,4,0,Math.PI*2);ctx.fill();ctx.fillStyle=textColor;const lines=wrapTextEllipsis(ctx,item,maxWidth-18,maxLinesPerItem);lines.forEach((line,i)=>ctx.fillText(line,x+15,cursor+i*lineHeight));cursor+=lines.length*lineHeight+14;});return cursor;}
+// All exported text is measured before drawing. Each region has a hard boundary.
+function fitCanvasText(ctx,text,maxWidth,maxLines,startSize,minSize,weight='500',family='Arial'){
+  for(let size=startSize;size>=minSize;size--){
+    ctx.font=`${weight} ${size}px ${family}`;
+    const lines=wrapText(ctx,text,maxWidth);
+    if(lines.length<=maxLines)return {lines,size,clipped:false};
+  }
+  ctx.font=`${weight} ${minSize}px ${family}`;
+  return {lines:wrapTextEllipsis(ctx,text,maxWidth,maxLines),size:minSize,clipped:true};
+}
+function boundedCanvasText(ctx,text,x,top,maxWidth,maxHeight,opts={}){
+  const {startSize=18,minSize=12,weight='500',color=BRAND.text,lineRatio=1.28,maxLines=99}=opts;
+  const allowedLines=Math.min(maxLines,Math.max(1,Math.floor(maxHeight/(minSize*lineRatio))));
+  const result=fitCanvasText(ctx,text,maxWidth,allowedLines,startSize,minSize,weight);
+  // Check actual height at selected font, shrinking if needed.
+  while(result.size>minSize && result.lines.length*result.size*lineRatio>maxHeight){
+    result.size--;ctx.font=`${weight} ${result.size}px Arial`;
+    result.lines=wrapText(ctx,text,maxWidth);
+  }
+  const lineHeight=result.size*lineRatio;
+  const maxVisible=Math.max(1,Math.min(maxLines,Math.floor(maxHeight/lineHeight)));
+  ctx.font=`${weight} ${result.size}px Arial`;ctx.fillStyle=color;
+  const lines= result.lines.length>maxVisible?wrapTextEllipsis(ctx,text,maxWidth,maxVisible):result.lines;
+  ctx.save();ctx.beginPath();ctx.rect(x-2,top-2,maxWidth+4,maxHeight+3);ctx.clip();
+  lines.forEach((line,i)=>ctx.fillText(line,x,top+result.size+(i*lineHeight)));
+  ctx.restore();return {height:lines.length*lineHeight,clipped:result.clipped||result.lines.length>maxVisible};
+}
+// Fit the bullet list as one unit, preserving title space and bottom padding.
+// In a fixed-size social image it is safer to show fewer complete items than overlap.
+function boundedCanvasBullets(ctx,items,x,top,width,height,color,startSize=16){
+  const list=(items||[]).filter(Boolean).slice(0,2);
+  if(!list.length)return;
+  const bottom=top+height;
+  const itemGap=9, textX=x+18, textW=width-24;
+  let selected=null;
+  for(let size=startSize;size>=11;size--){
+    ctx.font=`500 ${size}px Arial`;
+    const lineHeight=Math.ceil(size*1.22);
+    const rows=list.map(item=>wrapText(ctx,item,textW));
+    const needed=rows.reduce((total,lines)=>total+lines.length*lineHeight,0)+(list.length-1)*itemGap;
+    if(needed<=height){selected={size,lineHeight,rows};break;}
+  }
+  if(!selected){
+    const size=11,lineHeight=14;ctx.font=`500 ${size}px Arial`;
+    const lineBudget=Math.max(list.length,Math.floor((height-(list.length-1)*itemGap)/lineHeight));
+    const first=Math.ceil(lineBudget/list.length),second=lineBudget-first;
+    const counts=list.length===1?[lineBudget]:[first,Math.max(1,second)];
+    selected={size,lineHeight,rows:list.map((item,i)=>wrapTextEllipsis(ctx,item,textW,counts[i]))};
+  }
+  ctx.save();ctx.beginPath();ctx.rect(x-6,top-2,width+10,height+4);ctx.clip();
+  let y=top;
+  list.forEach((item,i)=>{
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(x+4,y+selected.size*0.72,4,0,Math.PI*2);ctx.fill();
+    ctx.font=`500 ${selected.size}px Arial`;ctx.fillStyle='#34524f';
+    selected.rows[i].forEach((line,j)=>ctx.fillText(line,textX,y+selected.size+j*selected.lineHeight));
+    y+=selected.rows[i].length*selected.lineHeight+itemGap;
+  });
+  ctx.restore();
+}
 function roundRect(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}}
 async function downloadDashboardJpg(){
   if(!state.feedback){toast('Finish a practice conversation first.');return}
@@ -135,29 +194,34 @@ async function downloadDashboardJpg(){
   ctx.fillStyle='#ffffff'; ctx.font='700 76px Arial'; ctx.fillText(String(Math.round(d.overall_score||0)),118,304); 
   ctx.font='600 18px Arial'; ctx.fillText('/ 100',235,304);
 
-  roundRect(ctx,364,178,600,170,28,'#ecf7f2'); 
-  ctx.fillStyle=BRAND.navy; ctx.font='700 22px Arial'; drawWrappedText(ctx,d.style_label||'Leadership reflection',392,220,540,28,2,BRAND.navy,'700 22px Arial');
-  drawWrappedText(ctx,d.main_theme||'',392,260,540,29,4,'#42615b','500 21px Arial');
+  roundRect(ctx,364,178,600,170,28,'#ecf7f2');
+  boundedCanvasText(ctx,d.style_label||'Leadership reflection',392,195,540,45,{startSize:22,minSize:16,weight:'700',color:BRAND.navy});
+  boundedCanvasText(ctx,d.main_theme||'',392,240,540,87,{startSize:21,minSize:15,color:'#42615b'});
 
   // dimension card
   roundRect(ctx,92,372,420,350,26,'#ffffff','#d9e9e2'); ctx.fillStyle=BRAND.navy; ctx.font='700 24px Arial'; ctx.fillText('CONVERSATION DASHBOARD',118,414);
   let rowY=446; DIMENSION_META.forEach(({key,label})=>{const score=Math.max(0,Math.min(100,Math.round((d.dimension_scores||{})[key]||0))); ctx.fillStyle='#5d7c73'; ctx.font='600 17px Arial'; ctx.fillText(label,118,rowY); ctx.fillStyle=BRAND.navy; ctx.font='700 17px Arial'; const val=String(score); ctx.fillText(val,438-ctx.measureText(val).width,rowY); roundRect(ctx,118,rowY+16,320,13,8,'#e8efec'); roundRect(ctx,118,rowY+16,Math.max(16,320*score/100),13,8,score>=80?BRAND.teal:score>=65?BRAND.blue:BRAND.coral); rowY+=46;});
   
-  // strengths & watchouts
-  roundRect(ctx,532,372,432,170,26,'#ffffff','#d9e9e2'); ctx.fillStyle=BRAND.navy; ctx.font='700 22px Arial'; ctx.fillText('WHAT WORKED',558,410); 
-  drawBulletList(ctx,(d.strengths||[]),565,444,360,22,2,BRAND.teal,'#34524f','500 17px Arial',3);
+  // Use fixed content bounds and adapt text inside each one; no paint may escape a card.
+  roundRect(ctx,532,372,432,170,26,'#ffffff','#d9e9e2');ctx.fillStyle=BRAND.navy;ctx.font='700 22px Arial';ctx.fillText('WHAT WORKED',558,410);
+  boundedCanvasBullets(ctx,d.strengths,561,431,380,98,BRAND.teal,16);
+  roundRect(ctx,532,554,432,182,26,'#ffffff','#d9e9e2');ctx.fillStyle=BRAND.navy;ctx.font='700 22px Arial';ctx.fillText('WHAT TO REFINE',558,592);
+  boundedCanvasBullets(ctx,d.improvements,561,615,380,105,BRAND.coral,16);
 
-  roundRect(ctx,532,554,432,182,26,'#ffffff','#d9e9e2'); ctx.fillStyle=BRAND.navy; ctx.font='700 22px Arial'; ctx.fillText('WHAT TO REFINE',558,592); 
-  drawBulletList(ctx,(d.improvements||[]),565,626,360,22,3,BRAND.coral,'#34524f','500 17px Arial',2);
+  roundRect(ctx,92,758,872,270,26,'#ffffff','#d9e9e2');ctx.fillStyle=BRAND.navy;ctx.font='700 22px Arial';ctx.fillText('MOMENT ANALYSIS',118,798);
+  (d.moment_analysis||[]).slice(0,2).forEach((m,idx)=>{
+    const bx=118+idx*420;roundRect(ctx,bx,826,394,178,20,'#f5fbf8');
+    boundedCanvasText(ctx,`“${m.quote}”`,bx+20,836,352,42,{startSize:16,minSize:12,weight:'700',color:BRAND.navy});
+    ctx.fillStyle='#5b7a74';ctx.font='700 13px Arial';ctx.fillText('Effect',bx+20,895);
+    boundedCanvasText(ctx,m.effect,bx+20,897,352,36,{startSize:14,minSize:11,color:'#405b58'});
+    ctx.fillStyle='#5b7a74';ctx.font='700 13px Arial';ctx.fillText('Coach',bx+20,946);
+    boundedCanvasText(ctx,m.coaching,bx+20,948,352,48,{startSize:14,minSize:11,color:'#405b58'});
+  });
 
-  // moments
-  roundRect(ctx,92,758,872,270,26,'#ffffff','#d9e9e2'); ctx.fillStyle=BRAND.navy; ctx.font='700 22px Arial'; ctx.fillText('MOMENT ANALYSIS',118,798); 
-  const moments=(d.moment_analysis||[]).slice(0,2);
-  moments.forEach((m,idx)=>{const bx=118 + idx*420; roundRect(ctx,bx,826,394,178,20,'#f5fbf8'); ctx.fillStyle=BRAND.navy; drawWrappedText(ctx,`“${m.quote}”`,bx+20,856,354,21,2,BRAND.navy,'700 16px Arial'); ctx.fillStyle='#5b7a74'; ctx.font='600 14px Arial'; ctx.fillText('Effect',bx+20,908); drawWrappedText(ctx,m.effect,bx+20,928,354,18,3,'#405b58','500 14px Arial'); ctx.fillStyle='#5b7a74'; ctx.font='600 14px Arial'; ctx.fillText('Coach',bx+20,980); drawWrappedText(ctx,m.coaching,bx+20,1000,354,18,3,'#405b58','500 14px Arial');});
-
-  // retry phrase / footer
-  roundRect(ctx,92,1046,872,170,26,BRAND.navy); ctx.fillStyle='#d7fc86'; ctx.font='700 20px Arial'; ctx.fillText('TRY THIS PHRASE NEXT TIME',118,1088); ctx.fillStyle='#ffffff'; drawWrappedText(ctx,d.retry_phrase||'',118,1130,820,30,4,'#ffffff','600 22px Arial');
-  ctx.fillStyle='#5a736c'; ctx.font='600 14px Arial'; ctx.fillText('AI-generated coaching reflection for practice and learning only — not a formal assessment.',92,1255); ctx.fillStyle=BRAND.navy; ctx.font='700 14px Arial'; ctx.fillText('biomdconsulting.com',856,1255);
+  // Suggested phrase is always confined within the dark panel.
+  roundRect(ctx,92,1046,872,170,26,BRAND.navy);ctx.fillStyle='#d7fc86';ctx.font='700 20px Arial';ctx.fillText('TRY THIS PHRASE NEXT TIME',118,1088);
+  boundedCanvasText(ctx,d.retry_phrase||'',118,1098,820,103,{startSize:22,minSize:14,weight:'600',color:'#ffffff',lineRatio:1.25});
+  ctx.fillStyle='#5a736c';ctx.font='600 14px Arial';ctx.fillText('AI-generated coaching reflection for practice and learning only — not a formal assessment.',92,1255);ctx.fillStyle=BRAND.navy;ctx.font='700 14px Arial';ctx.fillText('biomdconsulting.com',856,1255);
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.92)); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`BioMD-Leadership-Dashboard-${scenario.title.replace(/[^a-z0-9]+/ig,'-')}.jpg`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); toast('LinkedIn-ready JPG downloaded.');
 }
 async function detectMode(){try{const resp=await fetch('/api/status',{cache:'no-store',signal:AbortSignal.timeout(4500)});if(resp.ok){const value=await resp.json();state.live=Boolean(value.aiReady)}}catch{} $('privacyStatus').textContent='Avoid real names and private details'}
